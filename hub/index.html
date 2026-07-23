@@ -442,10 +442,28 @@
 					setText("chatContacts", contacts === null ? "—" : fmt(contacts));
 				}
 
+				async function sumPediaViews() {
+					try {
+						const r = await fetch(SUPABASE_URL + "/rest/v1/pedia?select=views", {
+							headers: { apikey: SUPABASE_KEY }
+						});
+						if (!r.ok) return null;
+						const data = await r.json();
+						return data.reduce((s, row) => s + (Number(row.views) || 0), 0);
+					} catch { return null; }
+				}
+
 				async function loadPedia() {
-					const entries = await countExact("pedia");
-					setText("pediaEntries", entries === null ? "—" : fmt(entries));
-					const totalViews = await sumColumn("pedia", "views");
+					try {
+						const r = await fetch(SUPABASE_URL + "/rest/v1/pedia?select=slug", {
+							headers: { apikey: SUPABASE_KEY }
+						});
+						if (!r.ok) { setText("pediaEntries", "—"); setText("pediaViews", "—"); return; }
+						const data = await r.json();
+						setText("pediaEntries", fmt(data.length));
+					} catch { setText("pediaEntries", "—"); }
+
+					const totalViews = await sumPediaViews();
 					setText("pediaViews", totalViews === null ? "—" : fmt(totalViews));
 				}
 
